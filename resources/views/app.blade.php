@@ -5,8 +5,8 @@
     <link rel="icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exchange App</title>
-    <script type="module" crossorigin src="/assets/index-D4LAzbKf.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CVa6U69s.css">
+    <script type="module" crossorigin src="/assets/index-CGnET7uQ.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B_iezcns.css">
   </head>
   <body>
     <div id="app"></div>

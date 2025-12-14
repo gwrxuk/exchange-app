@@ -39,17 +39,20 @@ const subtotal = computed(() => {
     return price * amount;
 });
 
+// Commission only applies to SELL orders (deducted from seller's USD)
 const commission = computed(() => {
-    return subtotal.value * COMMISSION_RATE;
+    if (orderForm.value.side === 'sell') {
+        return subtotal.value * COMMISSION_RATE;
+    }
+    return 0; // No commission for buyers
 });
 
+// BUY: Total cost = subtotal (no commission added)
 const totalCost = computed(() => {
-    if (orderForm.value.side === 'buy') {
-        return subtotal.value + commission.value;
-    }
     return subtotal.value;
 });
 
+// SELL: You receive = subtotal - commission
 const totalReceive = computed(() => {
     if (orderForm.value.side === 'sell') {
         return subtotal.value - commission.value;
@@ -70,7 +73,8 @@ const availableBalance = computed(() => {
 
 const insufficientFunds = computed(() => {
     if (orderForm.value.side === 'buy') {
-        return totalCost.value > balance.value && subtotal.value > 0;
+        // Buyer pays subtotal only (no commission)
+        return subtotal.value > balance.value && subtotal.value > 0;
     }
     const amount = parseFloat(orderForm.value.amount) || 0;
     return amount > (selectedAsset.value?.amount || 0) && amount > 0;
@@ -161,9 +165,9 @@ const setMaxAmount = () => {
     if (orderForm.value.side === 'sell' && selectedAsset.value) {
         orderForm.value.amount = selectedAsset.value.amount;
     } else if (orderForm.value.side === 'buy' && orderForm.value.price) {
-        // Calculate max amount based on available balance (accounting for commission)
+        // Calculate max amount based on available balance (no commission for buyers)
         const price = parseFloat(orderForm.value.price);
-        const maxAmount = balance.value / (price * (1 + COMMISSION_RATE));
+        const maxAmount = balance.value / price;
         orderForm.value.amount = Math.floor(maxAmount * 10000) / 10000; // Floor to 4 decimals
     }
 };
@@ -397,30 +401,47 @@ onUnmounted(() => {
                         <div class="p-5 rounded-xl bg-slate-900/70 border border-slate-700 space-y-3">
                             <div class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Order Preview</div>
                             
-                            <div class="flex justify-between items-center text-sm">
-                                <span class="text-gray-400">Subtotal</span>
-                                <span class="font-mono text-white">${{ formatNumber(subtotal) }}</span>
-                            </div>
+                            <!-- BUY Order Preview -->
+                            <template v-if="orderForm.side === 'buy'">
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-400">You Pay</span>
+                                    <span class="font-mono text-white">${{ formatNumber(subtotal) }}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-400">You Receive</span>
+                                    <span class="font-mono text-white">{{ orderForm.amount || '0' }} {{ symbol }}</span>
+                                </div>
+                                <div class="border-t border-slate-700 pt-3"></div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-300 font-medium">Total Cost</span>
+                                    <span class="font-mono text-xl font-bold text-green-400">${{ formatNumber(totalCost) }}</span>
+                                </div>
+                                <div class="text-xs text-gray-500 text-right">No commission fee for buyers</div>
+                            </template>
                             
-                            <div class="flex justify-between items-center text-sm">
-                                <span class="text-gray-400">
-                                    Commission (1.5%)
-                                    <span class="text-xs text-gray-500 ml-1">{{ orderForm.side === 'buy' ? 'added' : 'deducted' }}</span>
-                                </span>
-                                <span class="font-mono text-yellow-400">${{ formatNumber(commission) }}</span>
-                            </div>
-                            
-                            <div class="border-t border-slate-700 pt-3"></div>
-                            
-                            <div v-if="orderForm.side === 'buy'" class="flex justify-between items-center">
-                                <span class="text-gray-300 font-medium">Total Cost</span>
-                                <span class="font-mono text-xl font-bold text-green-400">${{ formatNumber(totalCost) }}</span>
-                            </div>
-                            
-                            <div v-else class="flex justify-between items-center">
-                                <span class="text-gray-300 font-medium">You Receive</span>
-                                <span class="font-mono text-xl font-bold text-red-400">${{ formatNumber(totalReceive) }}</span>
-                            </div>
+                            <!-- SELL Order Preview -->
+                            <template v-else>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-400">You Sell</span>
+                                    <span class="font-mono text-white">{{ orderForm.amount || '0' }} {{ symbol }}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-400">Subtotal</span>
+                                    <span class="font-mono text-white">${{ formatNumber(subtotal) }}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-400">
+                                        Commission (1.5%)
+                                        <span class="text-xs text-gray-500 ml-1">deducted</span>
+                                    </span>
+                                    <span class="font-mono text-yellow-400">-${{ formatNumber(commission) }}</span>
+                                </div>
+                                <div class="border-t border-slate-700 pt-3"></div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-300 font-medium">You Receive</span>
+                                    <span class="font-mono text-xl font-bold text-red-400">${{ formatNumber(totalReceive) }}</span>
+                                </div>
+                            </template>
 
                             <!-- Insufficient Funds Warning -->
                             <div v-if="insufficientFunds" class="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center gap-2">
