@@ -4,9 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Data\Profile\ProfileUpdateData;
 use App\Data\User\UserData;
-use App\Http\Controllers\Controller;
-use App\Http\Requests\ProfileEditRequest;
 use App\Http\Requests\ProfileDestroyRequest;
+use App\Http\Requests\ProfileEditRequest;
 use App\Services\Contracts\UserServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;

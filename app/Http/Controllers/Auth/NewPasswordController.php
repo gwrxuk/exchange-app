@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Data\Auth\NewPasswordStoreData;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\NewPasswordCreateRequest;
 use App\Services\Contracts\UserServiceInterface;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
@@ -12,8 +11,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class NewPasswordController extends Controller
 {

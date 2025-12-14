@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\User;
 use App\Models\Asset;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,7 +18,7 @@ class ProfileTest extends TestCase
             'user_id' => $user->id,
             'symbol' => 'BTC',
             'amount' => 1.5,
-            'locked_amount' => 0.5
+            'locked_amount' => 0.5,
         ]);
 
         $response = $this->actingAs($user)->getJson('/api/profile');
@@ -26,7 +26,7 @@ class ProfileTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'user' => ['id', 'name', 'email', 'balance'],
-                'assets' => [['symbol', 'amount', 'locked_amount']]
+                'assets' => [['symbol', 'amount', 'locked_amount']],
             ]);
     }
 
@@ -38,4 +38,3 @@ class ProfileTest extends TestCase
         $response->assertStatus(200);
     }
 }
-

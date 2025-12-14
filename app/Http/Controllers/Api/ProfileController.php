@@ -21,13 +21,13 @@ class ProfileController extends Controller
         // However, to strictly follow repo pattern for data access, we might want to reload it or just use it.
         // The user() method returns an authenticatable, which is a model.
         // Loading relationships via repo is cleaner.
-        
+
         // $user = $request->user()->load('assets');
         // Let's assume repo should handle loading assets? Or just load on model.
         // Repos usually return models.
-        
+
         $user = $request->user()->load('assets');
-        
+
         return response()->json([
             'user' => [
                 'id' => $user->id,

@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
+use App\Events\OrderMatched;
+use App\Models\Asset;
 use App\Models\Order;
 use App\Models\Trade;
 use App\Models\User;
-use App\Models\Asset;
 use Illuminate\Support\Facades\DB;
-use App\Events\OrderMatched;
 
 class MatchingService
 {
@@ -15,7 +15,7 @@ class MatchingService
     {
         // Loop until order is filled or no more matches
         while ($order->status === Order::STATUS_OPEN && $order->remaining_amount > 0) {
-            
+
             $match = null;
 
             if ($order->side === 'buy') {
@@ -40,12 +40,12 @@ class MatchingService
                     ->first();
             }
 
-            if (!$match) {
+            if (! $match) {
                 break;
             }
 
             $this->executeTrade($order, $match);
-            
+
             // Refresh order to get updated remaining_amount
             $order->refresh();
         }
@@ -56,10 +56,10 @@ class MatchingService
         DB::transaction(function () use ($taker, $maker) {
             // Price is always Maker's price (the one sitting in the book)
             $tradePrice = $maker->price;
-            
+
             // Amount is min of both
             $tradeAmount = min($taker->remaining_amount, $maker->remaining_amount);
-            
+
             // Commission Rate 1.5%
             $feeRate = 0.015;
 
@@ -88,7 +88,7 @@ class MatchingService
 
             // Settle Balances
             $this->settleBalances($taker, $maker, $tradePrice, $tradeAmount, $feeRate);
-            
+
             // Broadcast Event
             OrderMatched::dispatch($trade);
         });
@@ -101,17 +101,17 @@ class MatchingService
         $seller = $taker->side === 'sell' ? $taker : $maker;
 
         $totalValue = $price * $amount; // USD value
-        
+
         // --- Buyer Settlement ---
         // Buyer locked USD ($price * $amount) if they were maker?
         // If Taker was Buyer: Locked `taker->price * amount`. But pays `maker->price * amount`.
         // Difference should be refunded.
-        
+
         $buyerUser = User::lockForUpdate()->find($buyer->user_id);
-        
+
         // Calculate Cost
         $buyerCost = $totalValue; // Actual cost
-        
+
         // Release Locked Funds for Buyer
         if ($buyer->id === $taker->id) {
             // Taker (Buyer) locked `taker->price * amount`
@@ -129,7 +129,7 @@ class MatchingService
         // Buyer Receives Asset (Minus Asset Fee?) OR Pays USD Fee?
         // Let's deduct Fee from Asset received.
         $assetReceived = $amount * (1 - $feeRate);
-        
+
         // Add Asset to Buyer
         $buyerAsset = Asset::firstOrCreate(
             ['user_id' => $buyer->user_id, 'symbol' => $buyer->symbol],
@@ -141,10 +141,9 @@ class MatchingService
         // Save Buyer Balance (already deducted when ordering, possibly refunded diff)
         $buyerUser->save();
 
-
         // --- Seller Settlement ---
         $sellerUser = User::lockForUpdate()->find($seller->user_id);
-        
+
         // Seller locked Asset ($amount).
         // Release Locked Asset (it's gone now).
         $sellerAsset = Asset::where('user_id', $seller->user_id)->where('symbol', $seller->symbol)->lockForUpdate()->first();
@@ -154,9 +153,8 @@ class MatchingService
         // Seller Receives USD (Minus USD Fee?)
         // Let's deduct Fee from USD received.
         $usdReceived = $totalValue * (1 - $feeRate);
-        
+
         $sellerUser->balance += $usdReceived;
         $sellerUser->save();
     }
 }
-

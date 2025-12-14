@@ -17,4 +17,3 @@ class OrderData extends Data
         public string $created_at,
     ) {}
 }
-

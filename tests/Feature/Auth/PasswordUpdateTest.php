@@ -47,4 +47,3 @@ class PasswordUpdateTest extends TestCase
             ->assertJsonValidationErrors('current_password');
     }
 }
-

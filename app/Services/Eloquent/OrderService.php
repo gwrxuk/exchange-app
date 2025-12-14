@@ -4,10 +4,10 @@ namespace App\Services\Eloquent;
 
 use App\Models\Order;
 use App\Models\User;
-use App\Services\Contracts\OrderServiceInterface;
+use App\Repositories\Contracts\AssetRepositoryInterface;
 use App\Repositories\Contracts\OrderRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
-use App\Repositories\Contracts\AssetRepositoryInterface;
+use App\Services\Contracts\OrderServiceInterface;
 use App\Services\MatchingService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -15,8 +15,11 @@ use Illuminate\Support\Facades\DB;
 class OrderService implements OrderServiceInterface
 {
     protected $orders;
+
     protected $users;
+
     protected $assets;
+
     protected $matcher;
 
     public function __construct(
@@ -53,13 +56,13 @@ class OrderService implements OrderServiceInterface
                 // Sell side: Lock asset
                 $asset = $this->assets->lockForUpdate($user->id, $symbol);
 
-                if (!$asset || $asset->amount < $amount) {
+                if (! $asset || $asset->amount < $amount) {
                     throw new \Exception('Insufficient assets');
                 }
 
                 $this->assets->update($asset, [
                     'amount' => $asset->amount - $amount,
-                    'locked_amount' => $asset->locked_amount + $amount
+                    'locked_amount' => $asset->locked_amount + $amount,
                 ]);
             }
 
@@ -102,13 +105,12 @@ class OrderService implements OrderServiceInterface
                 $this->users->update($user, ['balance' => $user->balance + $refund]);
             } else {
                 $asset = $this->assets->lockForUpdate($user->id, $order->symbol);
-                
+
                 $this->assets->update($asset, [
                     'locked_amount' => $asset->locked_amount - $order->remaining_amount,
-                    'amount' => $asset->amount + $order->remaining_amount
+                    'amount' => $asset->amount + $order->remaining_amount,
                 ]);
             }
         });
     }
 }
-

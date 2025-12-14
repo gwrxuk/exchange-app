@@ -19,12 +19,11 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        
+
         $response->assertStatus(201)
             ->assertJsonStructure([
                 'message',
-                'user' => ['id', 'name', 'email']
+                'user' => ['id', 'name', 'email'],
             ]);
     }
 }
-

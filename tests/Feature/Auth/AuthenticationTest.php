@@ -20,11 +20,11 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        
+
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'message',
-                'user' => ['id', 'name', 'email']
+                'user' => ['id', 'name', 'email'],
             ]);
     }
 
@@ -47,7 +47,7 @@ class AuthenticationTest extends TestCase
         $response = $this->actingAs($user)->postJson('/logout');
 
         $this->assertGuest();
-        
+
         $response->assertStatus(200)
             ->assertJson(['message' => 'Logged out']);
     }

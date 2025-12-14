@@ -30,4 +30,3 @@ class EloquentAssetRepository implements AssetRepositoryInterface
         return $asset->update($data);
     }
 }
-

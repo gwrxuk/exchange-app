@@ -20,7 +20,7 @@ class PasswordConfirmationTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson(['message' => 'Password confirmed']);
-            
+
         $response->assertSessionHas('auth.password_confirmed_at');
     }
 
@@ -34,8 +34,7 @@ class PasswordConfirmationTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['password']);
-            
+
         $response->assertSessionMissing('auth.password_confirmed_at');
     }
 }
-

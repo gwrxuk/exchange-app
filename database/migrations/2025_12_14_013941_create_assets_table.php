@@ -15,7 +15,7 @@ return new class extends Migration
             $table->decimal('amount', 20, 8)->default(0);
             $table->decimal('locked_amount', 20, 8)->default(0);
             $table->timestamps();
-            
+
             $table->unique(['user_id', 'symbol']);
         });
     }

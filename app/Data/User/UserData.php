@@ -13,4 +13,3 @@ class UserData extends Data
         public float $balance = 0.0,
     ) {}
 }
-

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Data\User\UserData;
 use App\Data\Auth\LoginData;
+use App\Data\User\UserData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LogoutRequest;
 use Illuminate\Http\JsonResponse;

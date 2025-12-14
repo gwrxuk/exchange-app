@@ -2,13 +2,13 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use App\Repositories\Contracts\UserRepositoryInterface;
-use App\Repositories\Eloquent\EloquentUserRepository;
-use App\Repositories\Contracts\OrderRepositoryInterface;
-use App\Repositories\Eloquent\EloquentOrderRepository;
 use App\Repositories\Contracts\AssetRepositoryInterface;
+use App\Repositories\Contracts\OrderRepositoryInterface;
+use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Eloquent\EloquentAssetRepository;
+use App\Repositories\Eloquent\EloquentOrderRepository;
+use App\Repositories\Eloquent\EloquentUserRepository;
+use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
 {

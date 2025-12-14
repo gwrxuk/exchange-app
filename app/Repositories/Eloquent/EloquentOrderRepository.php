@@ -28,14 +28,14 @@ class EloquentOrderRepository implements OrderRepositoryInterface
 
     public function findOpenBuyOrders(string $symbol): ?Order
     {
-         // Find highest buy price (Logic from MatchingService)
-         // Not strictly needed here if MatchingService builds query, but good to have
-         return null; 
+        // Find highest buy price (Logic from MatchingService)
+        // Not strictly needed here if MatchingService builds query, but good to have
+        return null;
     }
 
     public function findOpenSellOrders(string $symbol): ?Order
     {
-         return null;
+        return null;
     }
 
     public function update(Order $order, array $data): bool
@@ -48,4 +48,3 @@ class EloquentOrderRepository implements OrderRepositoryInterface
         return Order::lockForUpdate()->find($id);
     }
 }
-

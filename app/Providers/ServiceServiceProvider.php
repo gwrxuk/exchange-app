@@ -2,11 +2,11 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use App\Services\Contracts\UserServiceInterface;
-use App\Services\Eloquent\UserService;
 use App\Services\Contracts\OrderServiceInterface;
+use App\Services\Contracts\UserServiceInterface;
 use App\Services\Eloquent\OrderService;
+use App\Services\Eloquent\UserService;
+use Illuminate\Support\ServiceProvider;
 
 class ServiceServiceProvider extends ServiceProvider
 {

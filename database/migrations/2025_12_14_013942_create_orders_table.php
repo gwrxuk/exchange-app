@@ -18,7 +18,7 @@ return new class extends Migration
             $table->decimal('remaining_amount', 20, 8);
             $table->tinyInteger('status')->default(1); // 1: Open, 2: Filled, 3: Cancelled
             $table->timestamps();
-            
+
             $table->index(['symbol', 'status', 'price']);
         });
     }

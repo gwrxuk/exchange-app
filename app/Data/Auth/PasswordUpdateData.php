@@ -2,11 +2,11 @@
 
 namespace App\Data\Auth;
 
-use Spatie\LaravelData\Data;
-use Spatie\LaravelData\Attributes\Validation\Required;
-use Spatie\LaravelData\Attributes\Validation\CurrentPassword;
 use Spatie\LaravelData\Attributes\Validation\Confirmed;
+use Spatie\LaravelData\Attributes\Validation\CurrentPassword;
 use Spatie\LaravelData\Attributes\Validation\Password;
+use Spatie\LaravelData\Attributes\Validation\Required;
+use Spatie\LaravelData\Data;
 
 class PasswordUpdateData extends Data
 {
@@ -18,4 +18,3 @@ class PasswordUpdateData extends Data
         public string $password,
     ) {}
 }
-

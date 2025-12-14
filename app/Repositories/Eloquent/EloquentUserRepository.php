@@ -37,4 +37,3 @@ class EloquentUserRepository implements UserRepositoryInterface
         return User::lockForUpdate()->find($id);
     }
 }
-
