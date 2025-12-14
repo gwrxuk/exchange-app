@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ProfileRequest;
-use App\Http\Requests\MyOrdersRequest;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {
@@ -16,7 +15,7 @@ class ProfileController extends Controller
         $this->users = $users;
     }
 
-    public function show(ProfileRequest $request)
+    public function show(Request $request)
     {
         // Ideally we should use $this->users->find($id) but we have the authenticated user model already.
         // However, to strictly follow repo pattern for data access, we might want to reload it or just use it.
@@ -40,7 +39,7 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function orders(MyOrdersRequest $request)
+    public function orders(Request $request)
     {
         // User's orders
         return response()->json($request->user()->orders()->orderBy('created_at', 'desc')->get());

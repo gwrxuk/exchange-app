@@ -3,26 +3,31 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Data\User\UserData;
+use App\Data\Auth\LoginData;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\LogoutRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): JsonResponse
+    public function store(LoginData $data): JsonResponse
     {
-        $request->authenticate();
+        if (! Auth::attempt($data->only('email', 'password')->toArray(), $data->remember)) {
+            throw ValidationException::withMessages([
+                'email' => trans('auth.failed'),
+            ]);
+        }
 
-        $request->session()->regenerate();
+        request()->session()->regenerate();
 
         return response()->json([
             'message' => 'Authenticated',
-            'user' => UserData::from($request->user()),
+            'user' => UserData::from(request()->user()),
         ]);
     }
 

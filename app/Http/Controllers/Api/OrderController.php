@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Data\Order\StoreOrderData;
 use App\Data\Order\IndexOrderData;
 use App\Data\Order\OrderData;
-use App\Http\Requests\CancelOrderRequest;
+use App\Data\Order\CancelOrderData;
 use App\Http\Controllers\Controller;
 use App\Repositories\Contracts\OrderRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
@@ -86,16 +86,22 @@ class OrderController extends Controller
         }
     }
 
-    public function cancel(CancelOrderRequest $request)
+    public function cancel(CancelOrderData $data)
     {
-        $id = $request->id;
-        $user = $request->user();
+        $id = $data->id;
+        $user = request()->user();
         
         try {
             DB::transaction(function () use ($user, $id) {
                 // Order existence and ownership is already checked in FormRequest authorization
                 // But we still need to lock it for update and ensure it's open
+                // With DTO, simple ID existence is checked. Ownership we check here or custom validation.
                 $order = $this->orders->lockForUpdate($id);
+
+                // DTO only validated ID exists. Need to check ownership.
+                if ($order->user_id !== $user->id) {
+                    throw new \Exception('Unauthorized');
+                }
 
                 if ($order->status !== Order::STATUS_OPEN) {
                     throw new \Exception('Order cannot be cancelled');
