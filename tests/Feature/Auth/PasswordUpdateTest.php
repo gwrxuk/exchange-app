@@ -17,16 +17,15 @@ class PasswordUpdateTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->from('/profile')
-            ->put('/password', [
+            ->putJson('/password', [
                 'current_password' => 'password',
                 'password' => 'new-password',
                 'password_confirmation' => 'new-password',
             ]);
 
         $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect('/profile');
+            ->assertStatus(200)
+            ->assertJson(['message' => 'Password updated']);
 
         $this->assertTrue(Hash::check('new-password', $user->refresh()->password));
     }
@@ -37,15 +36,15 @@ class PasswordUpdateTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->from('/profile')
-            ->put('/password', [
+            ->putJson('/password', [
                 'current_password' => 'wrong-password',
                 'password' => 'new-password',
                 'password_confirmation' => 'new-password',
             ]);
 
         $response
-            ->assertSessionHasErrors('current_password')
-            ->assertRedirect('/profile');
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('current_password');
     }
 }
+
