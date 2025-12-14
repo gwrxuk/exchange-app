@@ -1,15 +1,10 @@
 <template>
     <router-view></router-view>
+    <ToastContainer />
+    <ConfirmDialog />
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
-import { useAuthStore } from './stores/auth';
-
-const authStore = useAuthStore();
-
-onMounted(() => {
-    authStore.fetchUser();
-});
+import ToastContainer from './components/ToastContainer.vue';
+import ConfirmDialog from './components/ConfirmDialog.vue';
 </script>
-

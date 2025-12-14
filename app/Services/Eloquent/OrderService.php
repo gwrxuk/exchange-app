@@ -2,6 +2,7 @@
 
 namespace App\Services\Eloquent;
 
+use App\Events\OrderBookUpdated;
 use App\Models\Order;
 use App\Models\User;
 use App\Repositories\Contracts\AssetRepositoryInterface;
@@ -77,16 +78,25 @@ class OrderService implements OrderServiceInterface
             ]);
         });
 
-        // Dispatch matching
+        // Broadcast order book update to all users
+        OrderBookUpdated::dispatch($symbol, 'order_created');
+
+        // Dispatch matching (may trigger additional OrderBookUpdated via OrderMatched)
         $this->matcher->match($order);
+
+        // Refresh order to get latest status after matching
+        $order->refresh();
 
         return $order;
     }
 
     public function cancelOrder(int $orderId, User $user): void
     {
-        DB::transaction(function () use ($user, $orderId) {
+        $symbol = null;
+
+        DB::transaction(function () use ($user, $orderId, &$symbol) {
             $order = $this->orders->lockForUpdate($orderId);
+            $symbol = $order->symbol;
 
             if ($order->user_id !== $user->id) {
                 throw new \Exception('Unauthorized');
@@ -112,5 +122,10 @@ class OrderService implements OrderServiceInterface
                 ]);
             }
         });
+
+        // Broadcast order book update to all users
+        if ($symbol) {
+            OrderBookUpdated::dispatch($symbol, 'order_cancelled');
+        }
     }
 }

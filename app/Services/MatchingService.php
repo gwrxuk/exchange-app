@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\OrderBookUpdated;
 use App\Events\OrderMatched;
 use App\Models\Asset;
 use App\Models\Order;
@@ -53,6 +54,8 @@ class MatchingService
 
     protected function executeTrade(Order $taker, Order $maker)
     {
+        $symbol = $taker->symbol;
+
         DB::transaction(function () use ($taker, $maker) {
             // Price is always Maker's price (the one sitting in the book)
             $tradePrice = $maker->price;
@@ -89,9 +92,12 @@ class MatchingService
             // Settle Balances
             $this->settleBalances($taker, $maker, $tradePrice, $tradeAmount, $feeRate);
 
-            // Broadcast Event
+            // Broadcast OrderMatched to both parties (private channels)
             OrderMatched::dispatch($trade);
         });
+
+        // Broadcast OrderBookUpdated to all users (public channel)
+        OrderBookUpdated::dispatch($symbol, 'order_matched');
     }
 
     protected function settleBalances($taker, $maker, $price, $amount, $feeRate)
@@ -100,59 +106,53 @@ class MatchingService
         $buyer = $taker->side === 'buy' ? $taker : $maker;
         $seller = $taker->side === 'sell' ? $taker : $maker;
 
-        $totalValue = $price * $amount; // USD value
+        $totalValue = $price * $amount; // USD value (e.g., 0.01 BTC @ $95,000 = $950)
+
+        // Commission: 1.5% of trade volume
+        // Example: $950 * 0.015 = $14.25 USD fee
+        // Fee is deducted from SELLER's USD received (consistent approach)
+        $fee = $totalValue * $feeRate;
 
         // --- Buyer Settlement ---
-        // Buyer locked USD ($price * $amount) if they were maker?
-        // If Taker was Buyer: Locked `taker->price * amount`. But pays `maker->price * amount`.
-        // Difference should be refunded.
-
         $buyerUser = User::lockForUpdate()->find($buyer->user_id);
 
-        // Calculate Cost
-        $buyerCost = $totalValue; // Actual cost
+        // Buyer pays the trade value (already locked when order placed)
+        $buyerCost = $totalValue;
 
-        // Release Locked Funds for Buyer
+        // If Buyer was Taker: may have locked more than needed (their limit price vs maker's price)
+        // Refund the difference
         if ($buyer->id === $taker->id) {
-            // Taker (Buyer) locked `taker->price * amount`
-            // Refund difference
             $locked = $taker->price * $amount;
             $diff = $locked - $buyerCost;
             if ($diff > 0) {
                 $buyerUser->balance += $diff;
             }
-        } else {
-            // Maker (Buyer) locked `maker->price * amount` which is exactly `buyerCost`.
-            // No refund needed on cost basis.
         }
 
-        // Buyer Receives Asset (Minus Asset Fee?) OR Pays USD Fee?
-        // Let's deduct Fee from Asset received.
-        $assetReceived = $amount * (1 - $feeRate);
-
-        // Add Asset to Buyer
+        // Buyer receives FULL asset amount (no fee deduction)
         $buyerAsset = Asset::firstOrCreate(
             ['user_id' => $buyer->user_id, 'symbol' => $buyer->symbol],
             ['amount' => 0, 'locked_amount' => 0]
         );
-        $buyerAsset->amount += $assetReceived;
+        $buyerAsset->amount += $amount;
         $buyerAsset->save();
 
-        // Save Buyer Balance (already deducted when ordering, possibly refunded diff)
         $buyerUser->save();
 
         // --- Seller Settlement ---
         $sellerUser = User::lockForUpdate()->find($seller->user_id);
 
-        // Seller locked Asset ($amount).
-        // Release Locked Asset (it's gone now).
-        $sellerAsset = Asset::where('user_id', $seller->user_id)->where('symbol', $seller->symbol)->lockForUpdate()->first();
+        // Release seller's locked asset (it's been transferred to buyer)
+        $sellerAsset = Asset::where('user_id', $seller->user_id)
+            ->where('symbol', $seller->symbol)
+            ->lockForUpdate()
+            ->first();
         $sellerAsset->locked_amount -= $amount;
         $sellerAsset->save();
 
-        // Seller Receives USD (Minus USD Fee?)
-        // Let's deduct Fee from USD received.
-        $usdReceived = $totalValue * (1 - $feeRate);
+        // Seller receives USD MINUS the 1.5% commission fee
+        // Example: $950 - $14.25 = $935.75 USD
+        $usdReceived = $totalValue - $fee;
 
         $sellerUser->balance += $usdReceived;
         $sellerUser->save();

@@ -17,7 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        // JWT is stateless - no session/CSRF needed for API
+        // Don't use statefulApi() with JWT
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

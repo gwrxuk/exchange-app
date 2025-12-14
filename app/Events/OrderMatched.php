@@ -14,14 +14,14 @@ class OrderMatched implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $trade;
+    public Trade $trade;
 
     /**
      * Create a new event instance.
      */
     public function __construct(Trade $trade)
     {
-        $this->trade = $trade;
+        $this->trade = $trade->load(['buyer', 'seller']);
     }
 
     /**
@@ -32,9 +32,38 @@ class OrderMatched implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('user.'.$this->trade->buyer_id),
-            new PrivateChannel('user.'.$this->trade->seller_id),
-            new Channel('market.'.$this->trade->symbol), // For orderbook updates
+            // Private channels for both parties (buyer and seller)
+            new PrivateChannel('App.Models.User.' . $this->trade->buyer_id),
+            new PrivateChannel('App.Models.User.' . $this->trade->seller_id),
+        ];
+    }
+
+    /**
+     * The event's broadcast name.
+     */
+    public function broadcastAs(): string
+    {
+        return 'OrderMatched';
+    }
+
+    /**
+     * Get the data to broadcast.
+     *
+     * @return array<string, mixed>
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'trade' => [
+                'id' => $this->trade->id,
+                'symbol' => $this->trade->symbol,
+                'price' => (float) $this->trade->price,
+                'amount' => (float) $this->trade->amount,
+                'buyer_id' => $this->trade->buyer_id,
+                'seller_id' => $this->trade->seller_id,
+                'created_at' => $this->trade->created_at->toISOString(),
+            ],
+            'message' => "Trade executed: {$this->trade->amount} {$this->trade->symbol} @ \${$this->trade->price}",
         ];
     }
 }
