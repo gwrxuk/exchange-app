@@ -10,7 +10,7 @@ class UserData extends Data
         public int $id,
         public string $name,
         public string $email,
-        public float $balance,
+        public float $balance = 0.0,
     ) {}
 }
 
