@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Data\Auth\PasswordUpdateData;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\PasswordUpdateRequest;
 use App\Repositories\Contracts\UserRepositoryInterface;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 
 class PasswordController extends Controller
@@ -20,14 +20,12 @@ class PasswordController extends Controller
     /**
      * Update the user's password.
      */
-    public function update(PasswordUpdateRequest $request): RedirectResponse
+    public function update(PasswordUpdateData $data): JsonResponse
     {
-        $validated = $request->validated();
-
-        $this->users->update($request->user(), [
-            'password' => Hash::make($validated['password']),
+        $this->users->update(request()->user(), [
+            'password' => Hash::make($data->password),
         ]);
 
-        return back();
+        return response()->json(['message' => 'Password updated']);
     }
 }

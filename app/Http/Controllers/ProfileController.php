@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Data\Profile\ProfileUpdateData;
 use App\Data\User\UserData;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ProfileUpdateRequest;
 use App\Http\Requests\ProfileEditRequest;
 use App\Http\Requests\ProfileDestroyRequest;
 use App\Repositories\Contracts\UserRepositoryInterface;
@@ -34,19 +34,20 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): JsonResponse
+    public function update(ProfileUpdateData $data): JsonResponse
     {
-        $request->user()->fill($request->validated());
+        $user = request()->user();
+        $user->fill($data->all());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $this->users->update($request->user(), $request->user()->getAttributes());
+        $this->users->update($user, $user->getAttributes());
 
         return response()->json([
             'message' => 'Profile updated',
-            'user' => UserData::from($request->user()),
+            'user' => UserData::from($user),
         ]);
     }
 

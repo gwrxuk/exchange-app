@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Data\Auth\NewPasswordStoreData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\NewPasswordCreateRequest;
-use App\Http\Requests\NewPasswordStoreRequest;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -40,25 +40,13 @@ class NewPasswordController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(NewPasswordStoreRequest $request): RedirectResponse
+    public function store(NewPasswordStoreData $data): JsonResponse
     {
-        // Here we will attempt to reset the user's password. If it is successful we
-        // will update the password on an actual user model and persist it to the
-        // database. Otherwise we will parse the error and return the response.
         $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user) use ($request) {
-                // We use Repository here if possible, but Password::reset expects a callback with a User model.
-                // Since EloquentUserRepository returns Eloquent Models, this is fine.
-                // We can use $this->users->update() but forceFill is specific to Eloquent.
-                // Let's stick to repository update for consistency if possible, 
-                // but for password reset with token logic, we might need to be careful.
-                
-                // $user->forceFill([...])->save() is standard Laravel behavior inside this callback.
-                // Replacing it with repo call:
-                
+            $data->all(),
+            function ($user) use ($data) {
                 $this->users->update($user, [
-                    'password' => Hash::make($request->password),
+                    'password' => Hash::make($data->password),
                     'remember_token' => Str::random(60),
                 ]);
 
@@ -66,11 +54,8 @@ class NewPasswordController extends Controller
             }
         );
 
-        // If the password was successfully reset, we will redirect the user back to
-        // the application's home authenticated view. If there is an error we can
-        // redirect them back to where they came from with their error message.
         if ($status == Password::PASSWORD_RESET) {
-            return redirect()->route('login')->with('status', __($status));
+            return response()->json(['message' => __($status)]);
         }
 
         throw ValidationException::withMessages([
