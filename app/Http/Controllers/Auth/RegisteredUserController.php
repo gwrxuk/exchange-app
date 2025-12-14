@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Data\User\UserData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RegisterRequest;
-use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Services\Contracts\UserServiceInterface;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -13,11 +13,11 @@ use Illuminate\Support\Facades\Hash;
 
 class RegisteredUserController extends Controller
 {
-    protected $users;
+    protected $userService;
 
-    public function __construct(UserRepositoryInterface $users)
+    public function __construct(UserServiceInterface $userService)
     {
-        $this->users = $users;
+        $this->userService = $userService;
     }
 
     /**
@@ -27,7 +27,7 @@ class RegisteredUserController extends Controller
      */
     public function store(RegisterRequest $request): JsonResponse
     {
-        $user = $this->users->create([
+        $user = $this->userService->create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),

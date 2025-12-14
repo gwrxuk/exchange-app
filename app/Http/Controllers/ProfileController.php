@@ -7,17 +7,17 @@ use App\Data\User\UserData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProfileEditRequest;
 use App\Http\Requests\ProfileDestroyRequest;
-use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Services\Contracts\UserServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
 class ProfileController extends Controller
 {
-    protected $users;
+    protected $userService;
 
-    public function __construct(UserRepositoryInterface $users)
+    public function __construct(UserServiceInterface $userService)
     {
-        $this->users = $users;
+        $this->userService = $userService;
     }
 
     /**
@@ -43,7 +43,7 @@ class ProfileController extends Controller
             $user->email_verified_at = null;
         }
 
-        $this->users->update($user, $user->getAttributes());
+        $this->userService->update($user, $user->getAttributes());
 
         return response()->json([
             'message' => 'Profile updated',
@@ -60,7 +60,7 @@ class ProfileController extends Controller
 
         Auth::logout();
 
-        $this->users->delete($user);
+        $this->userService->delete($user);
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

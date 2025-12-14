@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Data\Auth\NewPasswordStoreData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\NewPasswordCreateRequest;
-use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Services\Contracts\UserServiceInterface;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
@@ -17,22 +17,11 @@ use Inertia\Response;
 
 class NewPasswordController extends Controller
 {
-    protected $users;
+    protected $userService;
 
-    public function __construct(UserRepositoryInterface $users)
+    public function __construct(UserServiceInterface $userService)
     {
-        $this->users = $users;
-    }
-
-    /**
-     * Display the password reset view.
-     */
-    public function create(NewPasswordCreateRequest $request): Response
-    {
-        return Inertia::render('Auth/ResetPassword', [
-            'email' => $request->email,
-            'token' => $request->route('token'),
-        ]);
+        $this->userService = $userService;
     }
 
     /**
@@ -45,7 +34,7 @@ class NewPasswordController extends Controller
         $status = Password::reset(
             $data->all(),
             function ($user) use ($data) {
-                $this->users->update($user, [
+                $this->userService->update($user, [
                     'password' => Hash::make($data->password),
                     'remember_token' => Str::random(60),
                 ]);

@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Services\Contracts\UserServiceInterface;
 use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {
-    protected $users;
+    protected $userService;
 
-    public function __construct(UserRepositoryInterface $users)
+    public function __construct(UserServiceInterface $userService)
     {
-        $this->users = $users;
+        $this->userService = $userService;
     }
 
     public function show(Request $request)
