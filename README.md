@@ -143,6 +143,17 @@ A limit-order exchange engine with real-time order matching, atomic execution, a
 
 **Unique constraint:** `(user_id, symbol)`
 
+### symbols
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | bigint | Primary key |
+| code | string(10) | Unique, e.g., "BTC", "ETH" |
+| name | string | Full name, e.g., "Bitcoin", "Ethereum" |
+| is_active | boolean | Whether symbol is tradeable, default true |
+| created_at | timestamp | |
+| updated_at | timestamp | |
+
 ### orders
 
 | Column | Type | Notes |
@@ -180,20 +191,29 @@ A limit-order exchange engine with real-time order matching, atomic execution, a
 │   users     │       │   assets    │       │   orders    │
 ├─────────────┤       ├─────────────┤       ├─────────────┤
 │ id (PK)     │◄──┬───│ user_id(FK) │       │ user_id(FK) │───┐
-│ name        │   │   │ symbol      │       │ symbol      │   │
-│ email       │   │   │ amount      │       │ side        │   │
-│ balance     │   │   │ locked_amt  │       │ price       │   │
-└─────────────┘   │   └─────────────┘       │ amount      │   │
-                  │                         │ remaining   │   │
-                  │                         │ status      │   │
-                  │                         └─────────────┘   │
-                  │                                           │
-                  │       ┌─────────────┐                     │
-                  │       │   trades    │                     │
-                  │       ├─────────────┤                     │
-                  ├───────│ buyer_id    │◄────────────────────┘
-                  └───────│ seller_id   │
-                          │ symbol      │
+│ name        │   │   │ symbol      │───┐   │ symbol      │─┐ │
+│ email       │   │   │ amount      │   │   │ side        │ │ │
+│ balance     │   │   │ locked_amt  │   │   │ price       │ │ │
+└─────────────┘   │   └─────────────┘   │   │ amount      │ │ │
+                  │                     │   │ remaining   │ │ │
+                  │                     │   │ status      │ │ │
+                  │                     │   └─────────────┘ │ │
+                  │                     │                   │ │
+                  │   ┌─────────────┐   │                   │ │
+                  │   │  symbols    │◄──┴───────────────────┘ │
+                  │   ├─────────────┤                         │
+                  │   │ id (PK)     │◄──────────────┐         │
+                  │   │ code        │               │         │
+                  │   │ name        │               │         │
+                  │   │ is_active   │               │         │
+                  │   └─────────────┘               │         │
+                  │                                 │         │
+                  │       ┌─────────────┐           │         │
+                  │       │   trades    │           │         │
+                  │       ├─────────────┤           │         │
+                  ├───────│ buyer_id    │◄──────────┼─────────┘
+                  └───────│ seller_id   │           │
+                          │ symbol      │───────────┘
                           │ price       │
                           │ amount      │
                           └─────────────┘
@@ -270,6 +290,68 @@ This approach ensures:
 - Simple and predictable fee structure
 
 ## Artisan Commands
+
+### Add Symbol
+
+Add a new trading symbol to the exchange:
+
+```bash
+php artisan app:add-symbol <code> <name> [options]
+```
+
+**Arguments:**
+| Argument | Description |
+|----------|-------------|
+| `code` | Symbol code (e.g., BTC, ETH) - max 10 characters |
+| `name` | Full name of the symbol (e.g., Bitcoin, Ethereum) |
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--inactive` | Create the symbol as inactive (not tradeable) |
+| `--dry-run` | Preview changes without applying |
+| `--force` | Skip confirmation prompt |
+
+**Examples:**
+
+```bash
+# Preview only (dry run)
+docker-compose exec app php artisan app:add-symbol BTC Bitcoin --dry-run
+
+# Add with confirmation prompt
+docker-compose exec app php artisan app:add-symbol ETH Ethereum
+
+# Add without confirmation (for scripts/automation)
+docker-compose exec app php artisan app:add-symbol SOL Solana --force
+
+# Add as inactive (can't be traded until activated)
+docker-compose exec app php artisan app:add-symbol DOGE Dogecoin --inactive
+```
+
+**Sample Output:**
+```
+📋 New Symbol Summary
++--------+----------+
+| Field  | Value    |
++--------+----------+
+| Code   | BTC      |
+| Name   | Bitcoin  |
+| Status | Active   |
++--------+----------+
+
+ Do you want to create this symbol? (yes/no) [no]:
+ > yes
+
+✅ Successfully created symbol 'BTC' (Bitcoin)
+
+📊 All Trading Symbols:
++------+----------+------------+
+| Code | Name     | Status     |
++------+----------+------------+
+| BTC  | Bitcoin  | ✅ Active  |
+| ETH  | Ethereum | ✅ Active  |
++------+----------+------------+
+```
 
 ### Add Asset to User
 
